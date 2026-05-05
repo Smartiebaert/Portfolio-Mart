@@ -291,18 +291,33 @@ const useReveal = () => {
 };
 
 /* ── Skill Stem Component ── */
-const SkillStem = ({ label, pct, isHard, inView }) => (
+const SkillStem = ({ label, pct, isHard, inView }) => {
+  const barRef = useRef(null);
+  useEffect(() => {
+    if (!inView || !barRef.current) return;
+    const timer = setTimeout(() => {
+      if (barRef.current) {
+        barRef.current.classList.add('pulsed');
+        barRef.current.addEventListener('animationend', () => {
+          barRef.current && barRef.current.classList.remove('pulsed');
+        }, { once: true });
+      }
+    }, 1400);
+    return () => clearTimeout(timer);
+  }, [inView]);
+  return (
   <div className="stem-item">
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:"4px"}}>
       <span className="stem-label">{label}</span>
       <span style={{fontFamily:"'Courier Prime',monospace",fontSize:".7rem",opacity:.55,color:"var(--ink)"}}>{pct}%</span>
     </div>
     <div className={`stem-track${isHard?" stem-hard":""}`}>
-      <div className="stem-bar" style={{width: inView ? pct+"%" : "0%"}}/>
+      <div ref={barRef} className="stem-bar" style={{width: inView ? pct+"%" : "0%"}}/>
       {inView && <span className="stem-flower">✿</span>}
     </div>
   </div>
-);
+  );
+};
 
 
 
@@ -423,6 +438,7 @@ const T = {
     modal_supply_cap: "Van grondstoffen tot upcycling — de volledige keten in kaart.",
     footer_tagline: "Een leven lang leren", footer_copy: "Textieltechnologie · Hogent",
     nav_brand_sub: "Textieltechnologie",
+    dm_light: "Lichtmodus", dm_dark: "Nacht in het Lab",
     card_open: "klik om te openen ↗", card_arrow: "→", specimen: "Specimen",
     gallery_label: "✦ Beeldmateriaal", video_label: "✦ Beeldverslag",
     lightbox_close: "[ SLUITEN ]", lightbox_hint: "klik om te sluiten ✦",
@@ -499,6 +515,7 @@ const T = {
     modal_supply_cap: "Des matières premières à l\'upcycling — toute la chaîne cartographiée.",
     footer_tagline: "Apprendre tout au long de la vie", footer_copy: "Technologie Textile · Hogent",
     nav_brand_sub: "Technologie Textile",
+    dm_light: "Mode clair", dm_dark: "Nuit au labo",
     card_open: "cliquez pour ouvrir ↗", card_arrow: "→", specimen: "Spécimen",
     gallery_label: "✦ Matériel visuel", video_label: "✦ Reportage visuel",
     lightbox_close: "[ FERMER ]", lightbox_hint: "cliquez pour fermer ✦",
@@ -575,6 +592,7 @@ const T = {
     modal_supply_cap: "From raw materials to upcycling — the full chain mapped out.",
     footer_tagline: "Lifelong learning", footer_copy: "Textile Technology · Hogent",
     nav_brand_sub: "Textile Technology",
+    dm_light: "Light mode", dm_dark: "Night in the Lab",
     card_open: "click to open ↗", card_arrow: "→", specimen: "Specimen",
     gallery_label: "✦ Visual material", video_label: "✦ Video report",
     lightbox_close: "[ CLOSE ]", lightbox_hint: "click to close ✦",
@@ -998,11 +1016,39 @@ body{
 .stem-track{flex:1;height:8px;background:rgba(223,160,164,.22);
   border-radius:4px;overflow:visible;position:relative;margin-right:18px}
 .stem-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--sage),var(--bx));
-  width:0%;transition:width 1.4s cubic-bezier(.34,1.1,.64,1);position:relative}
+  width:0%;transition:width 1.4s cubic-bezier(.34,1.1,.64,1);position:relative;
+  transform-origin:left center}
+.stem-bar.pulsed{animation:stemPulse .45s 1.4s ease-out both}
+@keyframes stemPulse{
+  0%{transform:scaleX(1) scaleY(1)}
+  35%{transform:scaleX(1.018) scaleY(1.18)}
+  65%{transform:scaleX(.995) scaleY(0.88)}
+  100%{transform:scaleX(1) scaleY(1)}
+}
 .stem-flower{position:absolute;right:-14px;top:50%;transform:translateY(-50%);
   font-size:.75rem;color:var(--bx);animation:popFlower .4s .9s ease both;opacity:0}
 @keyframes popFlower{to{opacity:1}}
 .stem-hard .stem-bar{background:linear-gradient(90deg,var(--bx),#9B4A50)}
+
+/* ── BACK TO TOP ── */
+.back-to-top{position:fixed;bottom:2rem;right:2rem;z-index:900;
+  width:42px;height:42px;border:1.5px solid var(--border);
+  background:var(--nav-bg);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  cursor:none;transition:all .3s ease;opacity:0;pointer-events:none;
+  color:var(--bx);font-size:.85rem;line-height:1}
+.back-to-top.visible{opacity:1;pointer-events:auto}
+.back-to-top:hover{border-color:var(--bx);background:var(--bx);color:var(--bg);
+  box-shadow:0 4px 18px var(--shadow);transform:translateY(-2px)}
+
+/* ── ABOUT: lead sentence styling ── */
+.about-lead{font-family:'Cormorant Garamond',serif;font-size:1.12rem;
+  font-style:italic;font-weight:400;color:var(--bx);line-height:1.6;
+  display:block;margin-bottom:.25rem}
+
+/* ── CV BUTTON STATES ── */
+.cv-btn.cv-loading{opacity:.65;pointer-events:none}
+.cv-btn.cv-done{border-color:var(--sage);color:var(--sage)}
 
 /* ── BLOOM hover on project cards ── */
 .pcard-bloom{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;
@@ -1273,10 +1319,12 @@ function Portfolio() {
 
       {/* ── NAV ── */}
       <nav className={`nav ${scrolled ? "scrolled" : ""}`}>
-        <div className="nav-brand">
-          <PressedRose size={22} opacity={0.75} rotate={-10} color={dark?"#C4706A":"#7E2E31"}/>
-          Herbarium Textile
-          
+        <div className="nav-brand" style={{display:"flex",flexDirection:"column",alignItems:"flex-start",lineHeight:1.1}}>
+          <div style={{display:"flex",alignItems:"center",gap:".4rem"}}>
+            <PressedRose size={22} opacity={0.75} rotate={-10} color={dark?"#C4706A":"#7E2E31"}/>
+            Mart Baert
+          </div>
+          <span style={{fontFamily:"'Montserrat',sans-serif",fontSize:".5rem",letterSpacing:".18em",textTransform:"uppercase",color:"var(--sage)",paddingLeft:"1.6rem",opacity:.8}}>{t.nav_brand_sub}</span>
         </div>
         <ul className="nav-links">
           {navItems.map(([id,label]) => (
@@ -1298,7 +1346,7 @@ function Portfolio() {
           </li>
           <li>
             <button className="dm-toggle" onClick={()=>setDark(d=>!d)}
-              title={dark ? "Lichtmodus" : "Nacht in het Lab"}>
+              title={dark ? t.dm_light : t.dm_dark}>
               {dark ? "☀" : "🔬"}
             </button>
           </li>
@@ -1394,17 +1442,29 @@ function Portfolio() {
         </div>
         <div className="about-grid reveal reveal-delay-2">
           <div className="about-text">
-            <p>{t.about_p1}</p>
-            <p>{t.about_p2}</p>
-            <p>{t.about_p3}</p>
+            <p><span className="about-lead">{t.about_p1.split('.')[0]}.</span>{t.about_p1.split('.').slice(1).join('.')}</p>
+            <p><span className="about-lead">{t.about_p2.split('.')[0]}.</span>{t.about_p2.split('.').slice(1).join('.')}</p>
+            <p><span className="about-lead">{t.about_p3.split('.')[0]}.</span>{t.about_p3.split('.').slice(1).join('.')}</p>
             <div style={{margin:"1.5rem 0"}}>
               <GrowingFiber dark={dark}/>
             </div>
-            <button className="cv-btn" onClick={()=>{
+            <button className="cv-btn" onClick={(e)=>{
+    const btn = e.currentTarget;
+    btn.classList.add('cv-loading');
+    btn.textContent = '[ Downloading... ]';
     const a=document.createElement('a');
     a.href=CV_PDF;
     a.download='CV_Mart_Baert.pdf';
     a.click();
+    setTimeout(()=>{
+      btn.classList.remove('cv-loading');
+      btn.classList.add('cv-done');
+      btn.textContent = '[ ✓ Downloaded ]';
+      setTimeout(()=>{
+        btn.classList.remove('cv-done');
+        btn.textContent = t.cv_btn;
+      }, 2800);
+    }, 800);
   }}>{t.cv_btn}</button>
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:"1.75rem"}}>
@@ -1561,11 +1621,11 @@ function Portfolio() {
                 <div className="frow">
                   <div className="fgroup">
                     <label className="flabel">{t.f_name}</label>
-                    <input className="finput" type="text" placeholder={t.f_name_ph} required value={form.naam} onChange={upd("naam")}/>
+                    <input className="finput" type="text" placeholder={t.f_name_ph} required autoComplete="name" value={form.naam} onChange={upd("naam")}/>
                   </div>
                   <div className="fgroup">
                     <label className="flabel">{t.f_email}</label>
-                    <input className="finput" type="email" placeholder={t.f_email_ph} required value={form.email} onChange={upd("email")}/>
+                    <input className="finput" type="email" placeholder={t.f_email_ph} required autoComplete="email" value={form.email} onChange={upd("email")}/>
                   </div>
                 </div>
                 <div className="fgroup">
@@ -1574,7 +1634,7 @@ function Portfolio() {
                 </div>
                 <div className="fgroup">
                   <label className="flabel">{t.f_message}</label>
-                  <textarea className="ftextarea" placeholder={t.f_message_ph} value={form.bericht} onChange={upd("bericht")}/>
+                  <textarea className="ftextarea" rows={5} placeholder={t.f_message_ph} value={form.bericht} onChange={upd("bericht")}/>
                 </div>
                 <button type="submit" className="send-btn">{t.f_send}</button>
               </form>
@@ -1591,7 +1651,7 @@ function Portfolio() {
         <div style={{position:"absolute",right:"1rem",top:"0",pointerEvents:"none"}}>
           <PressedDaisy size={52} opacity={0.1} rotate={20}/>
         </div>
-        <div className="footer-brand">Herbarium Textile ✿</div>
+        <div className="footer-brand">Mart Baert ✿</div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:".5rem"}}>
           <div className="footer-note">{t.footer_tagline}</div>
           <div className="footer-flowers">
@@ -1719,6 +1779,14 @@ function Portfolio() {
           <span className="lightbox-caption">{t.lightbox_hint}</span>
         </div>
       )}
+
+      {/* ── BACK TO TOP ── */}
+      <button
+        className={`back-to-top${scrolled ? " visible" : ""}`}
+        onClick={()=>window.scrollTo({top:0,behavior:"smooth"})}
+        title="Terug naar boven"
+        aria-label="Terug naar boven"
+      >✿</button>
 
     </div>
   );
