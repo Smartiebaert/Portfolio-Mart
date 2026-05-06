@@ -1702,12 +1702,14 @@ function Portfolio() {
               {[
                 {icon:"✉",label:t.label_email,val:"baertmart@gmail.com",href:"mailto:baertmart@gmail.com"},
                 {icon:"✆",label:t.label_phone,val:"0468 28 40 28",href:"tel:+32468284028"},
-              ].map(({icon,label,val,href})=>(
+                {icon:"in",label:"LinkedIn",val:"mart-baert",href:"https://www.linkedin.com/in/mart-baert-43566a372/",target:"_blank"},
+              ].map(({icon,label,val,href,target})=>(
                 <div key={label} className="citem">
-                  <div className="cicon">{icon}</div>
+                  <div className="cicon" style={icon==="in"?{fontFamily:"'Montserrat',sans-serif",fontWeight:700,fontSize:".75rem"}:{}}>{icon}</div>
                   <div className="citem-text">
                     <span className="citem-label">{label}</span>
                     <a href={href} className="citem-value" style={{color:"var(--ink)",textDecoration:"none"}}
+                      target={target||"_self"} rel={target?"noopener noreferrer":undefined}
                       onMouseEnter={()=>setHovering(true)} onMouseLeave={()=>setHovering(false)}>
                       {val}
                     </a>
